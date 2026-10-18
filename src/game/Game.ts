@@ -14,7 +14,7 @@ import { Lighting } from '../scene/Lighting';
 import { CameraController, type CameraView } from '../scene/CameraController';
 import { InputManager } from './InputManager';
 import { GameLoop, type LoopStats } from './GameLoop';
-import { GameState, type GamePhase, type HUDState, type RunResult } from './GameState';
+import { GameState, START_HEARTS, type GamePhase, type HUDState, type RunResult } from './GameState';
 import { UIManager } from '../ui/UIManager';
 import { ParticleSystem } from '../utils/ParticleSystem';
 import { gameAudio } from '../audio/AudioManager';
@@ -49,8 +49,6 @@ interface SafePoint {
   z: number;
   yaw: number;
 }
-
-const START_HEARTS = 3;
 
 export class Game {
   private readonly renderer: THREE.WebGLRenderer;

@@ -47,6 +47,8 @@ export interface GameStateSnapshot {
   checkpointIndex: number;
 }
 
+export const START_HEARTS = 5;
+
 /**
  * Small explicit state holder. The main Game class still owns transition
  * behavior, but all status values used by HUD and results come from here.
@@ -54,8 +56,8 @@ export interface GameStateSnapshot {
 export class GameState {
   phase: GamePhase = 'menu';
   runTime = 0;
-  health = 3;
-  maxHealth = 3;
+  health = START_HEARTS;
+  maxHealth = START_HEARTS;
   crashes = 0;
   checkpointIndex = 0;
   countdown = 0;
@@ -67,8 +69,8 @@ export class GameState {
 
   resetRun(): void {
     this.runTime = 0;
-    this.health = 3;
-    this.maxHealth = 3;
+    this.health = START_HEARTS;
+    this.maxHealth = START_HEARTS;
     this.crashes = 0;
     this.checkpointIndex = 0;
     this.countdown = 0;

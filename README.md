@@ -48,7 +48,7 @@ in `dist/` and needs no backend, API routes, or environment variables.
 
 Ride from the PELICAN COAST starting line to the lighthouse at Pelican Point.
 Collect floating fish, hop the broken-road gaps, dodge rocks and driftwood,
-and pass both checkpoints before the three hearts run out.
+and pass both checkpoints before the five hearts run out.
 
 | Input | Action |
 | --- | --- |
@@ -69,7 +69,7 @@ panel at any time. An explicit language choice is saved in `localStorage`.
 - Fish hovering above the road need a small jump.
 - Checkpoints refill one heart and become your respawn point.
 - A gap or an off-trail tumble costs a heart and sends you back to the last
-  checkpoint. Three crashes end the run. The lighthouse finish awards
+  checkpoint. Five crashes end the run. The lighthouse finish awards
   completion, health, fish-collection, and time bonuses.
 - The best score and best completion time persist in `localStorage` under
   `pelican-rider.best.v1`.
