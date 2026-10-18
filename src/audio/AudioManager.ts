@@ -1,3 +1,4 @@
+import bgmUrl from '../assets/audio/ocean-breeze.mp3';
 import { clamp } from '../utils/math';
 
 type MuteListener = (muted: boolean) => void;
@@ -17,6 +18,7 @@ export class AudioManager {
   private noiseBuffer: AudioBuffer | null = null;
   private unlockAttempted = false;
   private pedalTravel = 0;
+  private bgm: HTMLAudioElement | null = null;
   private muted: boolean;
   private readonly listeners = new Set<MuteListener>();
 
@@ -46,6 +48,7 @@ export class AudioManager {
   setMuted(muted: boolean, persist = true): void {
     this.muted = muted;
     if (persist) writeStoredMuted(muted);
+    if (this.bgm) this.bgm.muted = muted;
     if (this.master && this.context) {
       const now = this.context.currentTime;
       this.master.gain.cancelScheduledValues(now);
@@ -65,6 +68,7 @@ export class AudioManager {
   }
 
   unlock(): void {
+    this.startBgm();
     if (this.context) {
       if (this.context.state === 'suspended') void this.context.resume();
       return;
@@ -175,9 +179,36 @@ export class AudioManager {
     }
     this.sources.length = 0;
     this.listeners.clear();
+    if (this.bgm) {
+      this.bgm.pause();
+      this.bgm.removeAttribute('src');
+      this.bgm.load();
+      this.bgm = null;
+    }
     if (this.context) void this.context.close();
     this.context = null;
     this.master = null;
+  }
+
+  private startBgm(): void {
+    if (!this.bgm) {
+      try {
+        const bgm = new Audio(bgmUrl);
+        bgm.loop = true;
+        bgm.preload = 'auto';
+        bgm.volume = 0.17;
+        bgm.muted = this.muted;
+        this.bgm = bgm;
+      } catch {
+        return;
+      }
+    }
+    if (this.bgm.paused) {
+      void this.bgm.play().catch(() => {
+        // Autoplay can still be rejected on some embedded browsers. The next
+        // explicit UI action calls unlock() again and retries.
+      });
+    }
   }
 
   private startAmbience(): void {

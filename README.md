@@ -112,13 +112,16 @@ panel at any time. An explicit language choice is saved in `localStorage`.
   lighthouse.
 - Custom sky shader, fog, warm directional sunlight with shadows, hemisphere
   and fill lighting, and runtime-generated sign textures. No external 3D
-  models, images, or audio assets are used.
+  models or image textures are used; sound effects are procedural and the
+  soundtrack is a bundled CC0 music file.
 - Instanced rendering for repeated scenery, fish, grass, flowers, and road
   furniture.
 - A procedural Web Audio soundscape: ocean swells, wind, bicycle ticks, UI
   clicks, countdown tones, jump/landing, fish chimes, checkpoint stings, crash
-  impacts, a finish fanfare, and a game-over motif. Audio starts only after the
-  first user gesture, so browser autoplay rules are respected.
+  impacts, a finish fanfare, and a game-over motif. A looping CC0 coastal lo-fi
+  track plays underneath. All audio starts only after the first user gesture,
+  so browser autoplay rules are respected; `M` mutes music, ambience and SFX
+  together.
 - Complete DOM UI: loading state, main menu, controls card, best score,
   countdown, HUD, speedometer, hearts, route progress, fish/distance readouts,
   camera label, gap/fish prompts, toasts, pause, results, victory/game-over
@@ -160,6 +163,9 @@ src/
     AudioManager.ts        procedural Web Audio ambience and event sounds
   i18n/
     I18n.ts                English/Chinese dictionaries and DOM localisation
+  assets/audio/
+    ocean-breeze.mp3       CC0 looping coastal soundtrack (96 kbps)
+    ATTRIBUTION.md         Music credit and license details
   character/
     Pelican.ts             procedural rig, meshes, and IK pose solver
     Bicycle.ts             mechanical bicycle rig and moving anchors
@@ -303,10 +309,13 @@ build output directory and inspect the generated `dist/index.html`.
 
 ### 3D models or textures fail to load
 
-Pelican Rider has no external GLTF/GLB models, texture images, audio files,
-fonts, or workers. Every model, sign texture, and particle is generated at
-runtime. If the 3D canvas is missing, check for JavaScript errors, WebGL2
-support, and the browser/GPU. There are no model or texture URLs to repair.
+Pelican Rider has no external GLTF/GLB models, texture images, fonts, or
+workers. Every model, sign texture, and particle is generated at runtime. The
+only bundled media asset is the CC0 background music file, which Vite emits as
+a hashed asset and the browser downloads after the first user gesture. If the
+3D canvas is missing, check for JavaScript errors, WebGL2 support, and the
+browser/GPU. If music alone is missing, check the `/assets/` network request
+and the mute state.
 
 ### Pointer Lock does not work
 
@@ -375,6 +384,10 @@ The following was actually run on the development machine:
   paths executed without errors. Headless Chrome cannot judge perceived
   loudness, so the mix was checked for runtime correctness rather than
   listened to by a human.
+- The looping CC0 track was served as a ranged `/assets/ocean-breeze-*.mp3`
+  request (`audio/mpeg`, 197.6 s), started after the first gesture with
+  `loop: true` at volume 0.17, and its `muted` state followed both the sound
+  button and the `M` shortcut. No console errors occurred.
 - Localization verification: a fresh `en-US` browser context still opened in
   Chinese by default; switching to `EN` and back updated the title, menu, HUD,
   pause screen, results screen, controls, and mobile keyboard gate. The explicit
@@ -393,7 +406,8 @@ The following was actually run on the development machine:
   Final runs reported no page errors.
 - The build prints Vite's standard >500 kB chunk warning because Three.js is
   bundled into the main chunk; the delivered JS is ~729 kB minified / ~193 kB
-  gzip.
+  gzip. The 96 kbps soundtrack is emitted separately as a ~2.37 MB on-demand
+  asset, so it does not block first paint.
 
 **Frame rate** (the game's own rolling `GameLoop` statistics, 1440×900 CSS
 pixels, devicePixelRatio 1, headless Chrome on Windows, WebGL2 via ANGLE on
@@ -413,8 +427,9 @@ guarantee for integrated GPUs or 4K displays.
 
 ## Honest limitations
 
-- Desktop keyboard only; there are no touch or gamepad controls. Audio is
-  procedural Web Audio rather than recorded music or voice-over.
+- Desktop keyboard only; there are no touch or gamepad controls. Sound effects
+  and ambience are procedural Web Audio; the only recorded audio is the CC0
+  background track. There is no voice-over.
 - The course is one fixed, seeded 780 m level. Runs are deterministic; the
   difficulty ramps along the route, but there is no endless generation.
 - Balance is represented by automatic lean, wobble, off-road instability, and
@@ -430,14 +445,21 @@ guarantee for integrated GPUs or 4K displays.
   normal play.
 - All interface, game-state, toast, and result text is localised. Diegetic
   in-world signposts remain in English as part of the visual identity.
-- Sound is synthesised at runtime and is intentionally lightweight; there is
-  no music track or voice-over. Browsers require the first click or key press
-  before audio can start.
+- Sound effects are synthesised at runtime; the background music is a 96 kbps
+  MP3 streamed after the first interaction and looped. There is no voice-over.
+  Browsers require the first click or key press before audio can start.
 
 ## Asset and license notes
 
 All game visuals are generated at runtime with Three.js geometry, Canvas 2D
-textures, CSS, and inline SVG. Sound is synthesized with the Web Audio API. No
-external 3D models, image assets, audio files, paid assets, or network-hosted
+textures, CSS, and inline SVG. Sound effects are synthesized with the Web Audio
+API. The background music is:
+
+**“Ocean Breeze (LoFi, Ukulele, Peaceful)” by HoliznaCC0**
+([Free Music Archive](https://freemusicarchive.org/music/holiznacc0/public-domain-lofi/ocean-breeze-lofi-ukulele-peaceful-mp3/)),
+licensed **CC0 1.0**. The source recording was transcoded to 96 kbps MP3 for web
+delivery; see [the bundled attribution note](src/assets/audio/ATTRIBUTION.md).
+
+No external 3D models, image assets, paid assets, or network-hosted runtime
 assets are required. Fonts are local system font stacks; Chinese falls back to
 the operating system's CJK sans-serif fonts.
