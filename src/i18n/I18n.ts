@@ -250,8 +250,9 @@ function detectLocale(): Locale {
   } catch {
     // Storage can be unavailable in private context.
   }
-  const language = (navigator.language || '').toLowerCase();
-  return language.startsWith('zh') ? 'zh' : 'en';
+  // Pelican Rider ships in Chinese by default. English remains available via
+  // the visible language control, and an explicit saved choice is respected.
+  return 'zh';
 }
 
 export function getLocale(): Locale {

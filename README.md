@@ -62,8 +62,8 @@ and pass both checkpoints before the three hearts run out.
 | `M` | Mute / unmute sound |
 
 The menu and pause panels include visible **中文 / EN** language and sound
-controls. The language follows the browser locale on first visit, can be
-switched at any time from those panels, and is saved in `localStorage`.
+controls. Chinese is the default on first visit; switch to English from either
+panel at any time. An explicit language choice is saved in `localStorage`.
 
 - **Fish** are worth 100 points and chain into a combo (up to ×2.5).
 - Fish hovering above the road need a small jump.
@@ -375,11 +375,12 @@ The following was actually run on the development machine:
   paths executed without errors. Headless Chrome cannot judge perceived
   loudness, so the mix was checked for runtime correctness rather than
   listened to by a human.
-- Localization verification: a fresh `zh-CN` browser context automatically
-  opened in Chinese; switching to `EN` and back updated the title, menu, HUD,
-  pause screen, results screen, controls, and mobile keyboard gate. The choice
-  survived a reload via `localStorage`. The bilingual menu was checked at
-  1440×900, 1280×720, and 1024×768 without clipped controls.
+- Localization verification: a fresh `en-US` browser context still opened in
+  Chinese by default; switching to `EN` and back updated the title, menu, HUD,
+  pause screen, results screen, controls, and mobile keyboard gate. The explicit
+  English choice survived a reload via `localStorage`; clearing it restored the
+  Chinese default. The bilingual menu was checked at 1440×900, 1280×720, and
+  1024×768 without clipped controls.
 - A Netlify-like production build with `URL` set was inspected: canonical and
   Open Graph/Twitter URLs were absolute, no `%SITE_URL%` placeholders remained,
   and no `localhost`/`127.0.0.1` URLs were present in `dist/index.html`.
