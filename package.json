@@ -1,0 +1,21 @@
+{
+  "name": "pelican-rider",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A cozy 3D coastal cycling game starring a pelican.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.1.7"
+  }
+}

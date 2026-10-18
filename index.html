@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1a6e6a" />
+    <meta name="color-scheme" content="light" />
+    <meta name="application-name" content="Pelican Rider" />
+    <meta
+      name="description"
+      content="Pelican Rider is a cozy 3D coastal cycling adventure. Ride a very big bike, jump broken roads, collect fish, and reach the lighthouse."
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href="%SITE_URL%/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Pelican Rider" />
+    <meta property="og:title" content="Pelican Rider — A Coastal Cycling Caper" />
+    <meta
+      property="og:description"
+      content="Ride a very big bike as a very determined pelican. Jump broken roads, collect fish, and reach Pelican Point lighthouse."
+    />
+    <meta property="og:url" content="%SITE_URL%/" />
+    <meta property="og:image" content="%SITE_URL%/og-image.jpg" />
+    <meta property="og:image:secure_url" content="%SITE_URL%/og-image.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Pelican Rider title screen with the pelican on its bicycle." />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Pelican Rider — A Coastal Cycling Caper" />
+    <meta
+      name="twitter:description"
+      content="Ride a very big bike as a very determined pelican. Jump broken roads, collect fish, and reach Pelican Point lighthouse."
+    />
+    <meta name="twitter:image" content="%SITE_URL%/og-image.jpg" />
+    <meta name="twitter:image:alt" content="Pelican Rider title screen with the pelican on its bicycle." />
+
+    <title>Pelican Rider — A Coastal Cycling Caper</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game-canvas" tabindex="0" aria-label="Pelican Rider game canvas"></canvas>
+
+      <svg class="svg-sprite" aria-hidden="true">
+        <defs>
+          <symbol id="icon-fish" viewBox="0 0 24 24">
+            <path d="M3.2 12c3.2-4.7 8.6-6 13.3-2.8l4-3.1v11.8l-4-3.1C11.8 18 6.4 16.7 3.2 12Z" fill="currentColor"/>
+            <circle cx="8" cy="10.6" r="1.2" fill="#173633"/>
+          </symbol>
+          <symbol id="icon-heart" viewBox="0 0 24 24">
+            <path d="M12 20.4 4.2 12.9C1.3 10.1 3 5.2 7 4.7c2.1-.3 3.8.8 5 2.5 1.2-1.7 2.9-2.8 5-2.5 4 .5 5.7 5.4 2.8 8.2Z" fill="currentColor"/>
+          </symbol>
+          <symbol id="icon-heart-outline" viewBox="0 0 24 24">
+            <path d="M12 20.4 4.2 12.9C1.3 10.1 3 5.2 7 4.7c2.1-.3 3.8.8 5 2.5 1.2-1.7 2.9-2.8 5-2.5 4 .5 5.7 5.4 2.8 8.2Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </symbol>
+          <symbol id="icon-flag" viewBox="0 0 24 24">
+            <path d="M5 21V3m0 1h13.5l-2.2 4 2.2 4H5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </symbol>
+          <symbol id="icon-pelican" viewBox="0 0 64 64">
+            <path d="M12 40c4-14 17-22 30-17 4 2 7 5 8 9l10-4-6 11-8 1c-4 9-16 14-25 9-5-2-8-5-9-9Z" fill="#fff9ec"/>
+            <path d="M44 31c5-2 10-1 14 2-5 5-10 7-16 6l-1-7Z" fill="#f3a54a"/>
+            <path d="M39 27c-1-7 3-12 10-13-3 4-3 8-1 11" fill="#fff9ec" stroke="#183735" stroke-width="1.5"/>
+            <circle cx="42" cy="24" r="2.1" fill="#183735"/>
+            <path d="M17 43c-5-1-8-3-10-6 5 1 9 0 12-2" fill="none" stroke="#e9dcc3" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M27 51c-3 5-7 7-12 7" fill="none" stroke="#e4a04b" stroke-width="3" stroke-linecap="round"/>
+            <path d="M20 31c9 1 17 5 23 11" fill="none" stroke="#d9c8ad" stroke-width="2" stroke-linecap="round"/>
+          </symbol>
+        </defs>
+      </svg>
+
+      <div id="ui-root">
+        <div id="hud" class="hud is-hidden" aria-live="polite">
+          <div class="hud__top">
+            <div class="hud__brand">
+              <span class="hud__brand-mark"><svg><use href="#icon-pelican"></use></svg></span>
+              <span class="hud__brand-text">PELICAN<br />RIDER</span>
+            </div>
+            <div class="route-card">
+              <div class="route-card__labels">
+                <span>COAST ROAD</span>
+                <span id="hud-progress-label">0%</span>
+              </div>
+              <div class="route-track" id="hud-route-track">
+                <div class="route-fill" id="hud-route-fill"></div>
+                <span class="route-checkpoint" style="left: 31%"></span>
+                <span class="route-checkpoint" style="left: 63%"></span>
+                <span class="route-marker" id="hud-route-marker">
+                  <svg><use href="#icon-pelican"></use></svg>
+                </span>
+                <span class="route-finish">
+                  <svg><use href="#icon-flag"></use></svg>
+                </span>
+              </div>
+            </div>
+            <div class="hud__meta">
+              <div class="meta-block">
+                <span class="meta-label">TIME</span>
+                <strong id="hud-time">00:00.0</strong>
+              </div>
+              <div class="meta-block meta-block--best">
+                <span class="meta-label">BEST</span>
+                <strong id="hud-best">—</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="hud__left">
+            <div class="score-block">
+              <span class="eyebrow">SCORE</span>
+              <strong id="hud-score">000000</strong>
+            </div>
+            <div class="hud__pills">
+              <div class="hud-pill hud-pill--fish">
+                <svg><use href="#icon-fish"></use></svg>
+                <strong id="hud-fish">0</strong>
+                <span>fish</span>
+              </div>
+              <div class="hud-pill hud-pill--distance">
+                <span class="distance-dot"></span>
+                <strong id="hud-distance">0 m</strong>
+              </div>
+            </div>
+            <div class="hearts" id="hud-hearts" aria-label="Health">
+              <svg class="heart is-full"><use href="#icon-heart"></use></svg>
+              <svg class="heart is-full"><use href="#icon-heart"></use></svg>
+              <svg class="heart is-full"><use href="#icon-heart"></use></svg>
+            </div>
+          </div>
+
+          <div class="hud__right">
+            <div class="camera-chip" id="hud-camera">
+              <span class="camera-chip__dot"></span>
+              <span id="hud-camera-label">CHASE CAM</span>
+              <kbd>C</kbd>
+            </div>
+            <div class="speed-card">
+              <div class="speed-card__top">
+                <span class="eyebrow">SPEED</span>
+                <span class="speed-unit">KM/H</span>
+              </div>
+              <div class="speed-readout">
+                <strong id="hud-speed">0</strong>
+                <span class="speed-caption" id="hud-motion">READY</span>
+              </div>
+              <div class="speed-gauge"><i id="hud-speed-fill"></i></div>
+            </div>
+          </div>
+
+          <div class="hud__bottom">
+            <div class="mini-controls">
+              <span><kbd>W</kbd><kbd>S</kbd> pedal / brake</span>
+              <span><kbd>A</kbd><kbd>D</kbd> steer</span>
+              <span><kbd>SPACE</kbd> jump</span>
+              <span><kbd>P</kbd> pause</span>
+            </div>
+            <div class="jump-prompt" id="jump-prompt">
+              <span class="jump-prompt__icon">!</span>
+              <span>GAP AHEAD</span>
+              <kbd>SPACE</kbd>
+            </div>
+            <div class="jump-prompt jump-prompt--fish" id="fish-prompt">
+              <span class="jump-prompt__icon">✦</span>
+              <span>FISH ABOVE</span>
+              <kbd>SPACE</kbd>
+            </div>
+          </div>
+
+          <div class="status-toast" id="status-toast" role="status">
+            <span class="status-toast__icon">✦</span>
+            <span id="status-toast-text">Nice!</span>
+          </div>
+          <div class="countdown" id="countdown" aria-hidden="true"></div>
+          <div class="vignette"></div>
+          <div class="speed-lines" id="speed-lines"></div>
+        </div>
+
+        <section class="screen screen--menu is-visible" id="menu-screen" aria-labelledby="game-title">
+          <div class="menu-wash"></div>
+          <div class="menu-content">
+            <div class="menu-hero">
+              <div class="sticker">A COASTAL CYCLING CAPER</div>
+              <h1 id="game-title">
+                <span class="title-top">PELICAN</span>
+                <span class="title-bottom">RIDER</span>
+              </h1>
+              <p class="tagline">
+                A long beak. A big bike.<br />
+                One very salty coastline.
+              </p>
+              <div class="menu-actions">
+                <button class="button button--primary" id="btn-start">
+                  <span>Ride the coast</span>
+                  <span class="button__arrow">→</span>
+                </button>
+                <div class="best-chip" id="menu-best">
+                  <span class="eyebrow">PERSONAL BEST</span>
+                  <strong>—</strong>
+                </div>
+              </div>
+              <div class="menu-note">
+                <span class="menu-note__fish"><svg><use href="#icon-fish"></use></svg></span>
+                <span>Collect fish. Hop the gaps. Make it to the lighthouse before the sun dips.</span>
+              </div>
+            </div>
+            <aside class="menu-side">
+              <div class="menu-badge">
+                <svg class="menu-badge__bird"><use href="#icon-pelican"></use></svg>
+                <span>CAPTAIN<br />BEAK</span>
+              </div>
+              <div class="controls-card">
+                <div class="controls-card__heading">
+                  <span class="eyebrow">HOW TO RIDE</span>
+                  <span class="controls-card__hint">keyboard</span>
+                </div>
+                <div class="control-row"><span class="key-pair"><kbd>W</kbd><kbd>↑</kbd></span><span>Pedal faster</span></div>
+                <div class="control-row"><span class="key-pair"><kbd>S</kbd><kbd>↓</kbd></span><span>Brake</span></div>
+                <div class="control-row"><span class="key-pair"><kbd>A</kbd><kbd>D</kbd></span><span>Steer left / right</span></div>
+                <div class="control-row"><span class="key-pair"><kbd>A</kbd><kbd>←</kbd><kbd>→</kbd></span><span>Lean into turns</span></div>
+                <div class="control-row"><span class="key-pair"><kbd>SPACE</kbd></span><span>Jump</span></div>
+                <div class="control-row"><span class="key-pair"><kbd>C</kbd></span><span>Change camera</span></div>
+                <div class="control-row"><span class="key-pair"><kbd>P</kbd><kbd>ESC</kbd></span><span>Pause</span></div>
+                <div class="control-row"><span class="key-pair"><kbd>R</kbd></span><span>Restart</span></div>
+              </div>
+              <div class="menu-footnote">
+                <span class="dot"></span>
+                <span>Best enjoyed with a sea breeze and a sturdy helmet.</span>
+              </div>
+            </aside>
+          </div>
+          <div class="menu-footer">
+            <span>PELICAN RIDER · v1.0</span>
+            <span>WASD / ARROWS · SPACE · C · P · R</span>
+          </div>
+        </section>
+
+        <section class="screen screen--pause" id="pause-screen" aria-labelledby="pause-title">
+          <div class="panel panel--pause">
+            <div class="panel-kicker">CATCHING YOUR BREATH</div>
+            <h2 id="pause-title">Paused</h2>
+            <p class="panel-copy">The tide can wait. Your fish are safe in the basket.</p>
+            <div class="panel-actions">
+              <button class="button button--primary" id="btn-resume">Keep riding <span class="button__arrow">→</span></button>
+              <button class="button button--ghost" id="btn-pause-restart">Restart ride</button>
+              <button class="button button--quiet" id="btn-pause-menu">Exit to menu</button>
+            </div>
+            <div class="pause-tip"><kbd>P</kbd> or <kbd>ESC</kbd> to resume</div>
+          </div>
+        </section>
+
+        <section class="screen screen--results" id="result-screen" aria-labelledby="result-title">
+          <div class="panel panel--results">
+            <div class="result-burst" id="result-burst">✦</div>
+            <div class="panel-kicker" id="result-kicker">THE COAST IS CLEAR</div>
+            <h2 id="result-title">Beautiful ride!</h2>
+            <p class="panel-copy" id="result-copy">You made it to the lighthouse with a basket full of fish.</p>
+            <div class="result-stats">
+              <div class="result-stat"><span>SCORE</span><strong id="result-score">0</strong></div>
+              <div class="result-stat"><span>FISH</span><strong id="result-fish">0</strong></div>
+              <div class="result-stat"><span>TIME</span><strong id="result-time">00:00.0</strong></div>
+              <div class="result-stat"><span>CRASHES</span><strong id="result-crashes">0</strong></div>
+            </div>
+            <div class="best-ribbon" id="result-best">NEW PERSONAL BEST</div>
+            <div class="panel-actions panel-actions--row">
+              <button class="button button--primary" id="btn-again">Ride again <span class="button__arrow">→</span></button>
+              <button class="button button--ghost" id="btn-result-menu">Main menu</button>
+            </div>
+            <div class="result-footnote" id="result-footnote">Tip: fish can be scooped up mid-air.</div>
+          </div>
+        </section>
+
+        <div class="device-gate" id="device-gate" hidden>
+          <div
+            class="device-gate__card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="device-gate-title"
+          >
+            <div class="device-gate__badge">
+              <svg aria-hidden="true"><use href="#icon-pelican"></use></svg>
+            </div>
+            <div class="panel-kicker">A DESKTOP RIDE</div>
+            <h2 id="device-gate-title">Grab a keyboard.</h2>
+            <p>
+              Pelican Rider is steered with <strong>WASD</strong> or the arrow keys,
+              jumps with <strong>Space</strong>, and changes camera with <strong>C</strong>.
+            </p>
+            <p class="device-gate__note">
+              Phones and tablets without a keyboard cannot steer the bicycle.
+              Open this page on a laptop or desktop, or connect a keyboard and continue.
+            </p>
+            <button class="button button--primary" id="btn-device-continue">
+              I have a keyboard <span class="button__arrow">→</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="loading" id="loading">
+          <div class="loading__bird"><svg><use href="#icon-pelican"></use></svg></div>
+          <div class="loading__bar"><i></i></div>
+          <span>Warming up the bicycle chain…</span>
+        </div>
+
+        <noscript>
+          <div class="noscript">
+            <div class="noscript__card">
+              <div class="panel-kicker">JAVASCRIPT REQUIRED</div>
+              <h2>Pelican Rider needs JavaScript.</h2>
+              <p>
+                Please enable JavaScript and open the game in a WebGL2-capable
+                desktop browser to ride.
+              </p>
+              <p class="noscript__controls">
+                WASD / arrows to ride · Space to jump · C camera · P pause
+              </p>
+            </div>
+          </div>
+        </noscript>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

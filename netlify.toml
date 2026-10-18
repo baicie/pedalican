@@ -1,0 +1,11 @@
+# Netlify builds this static Vite site from the committed package-lock.json.
+# The site is served at the domain root; no functions or API routes are needed.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# There is no History API routing in Pelican Rider, so no SPA redirect is
+# required. Unknown paths correctly return the static 404 page.
