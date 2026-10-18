@@ -18,8 +18,8 @@
   --danger: #d9614f;
   --shadow-soft: 0 24px 70px rgba(29, 60, 51, 0.18);
   --shadow-card: 0 12px 32px rgba(26, 61, 51, 0.13);
-  --font-body: "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
-  --font-display: "Arial Rounded MT Bold", "Trebuchet MS", "Avenir Next", sans-serif;
+  --font-body: "Avenir Next", "Trebuchet MS", "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-display: "Arial Rounded MT Bold", "Trebuchet MS", "Avenir Next", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   --radius-lg: 28px;
   --radius-md: 18px;
   --radius-sm: 12px;
@@ -886,6 +886,20 @@ kbd {
   transform: rotate(-2deg);
 }
 
+html[lang="zh-CN"] .menu-hero h1 {
+  line-height: 0.84;
+  letter-spacing: 0.04em;
+}
+
+html[lang="zh-CN"] .title-bottom {
+  margin-left: 0.2em;
+  letter-spacing: 0.04em;
+}
+
+html[lang="zh-CN"] .sticker {
+  letter-spacing: 0.08em;
+}
+
 .tagline {
   margin: clamp(1.1rem, 2.4vh, 1.8rem) 0 0;
   color: var(--ink-soft);
@@ -1107,6 +1121,62 @@ kbd {
 .control-row kbd {
   background: rgba(255, 253, 246, 0.9);
   font-size: 0.6rem;
+}
+
+.preferences {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.preferences--compact {
+  justify-content: center;
+  margin-top: 0.85rem;
+}
+
+.preference-button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.62rem;
+  border: 1px solid rgba(23, 54, 51, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 249, 237, 0.62);
+  color: var(--ink-soft);
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 12px rgba(23, 54, 51, 0.07);
+  backdrop-filter: blur(10px);
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.preference-button:hover {
+  background: rgba(255, 250, 238, 0.96);
+  color: var(--teal-deep);
+  transform: translateY(-1px);
+}
+
+.preference-button:focus-visible {
+  outline: 3px solid rgba(242, 161, 70, 0.75);
+  outline-offset: 2px;
+}
+
+.preference-button__icon {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+}
+
+.js-locale-label {
+  min-width: 1.2em;
+  text-align: center;
 }
 
 .menu-footnote {

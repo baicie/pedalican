@@ -7,8 +7,6 @@ export type GamePhase =
   | 'finished'
   | 'gameover';
 
-export type CameraModeLabel = 'CHASE CAM' | 'CLOSE CAM' | 'COAST CAM';
-
 export interface HUDState {
   phase: GamePhase;
   score: number;
@@ -21,7 +19,7 @@ export interface HUDState {
   progress: number;
   speedKmh: number;
   motion: string;
-  cameraLabel: CameraModeLabel;
+  cameraLabel: string;
   gapWarning: boolean;
   fishWarning: boolean;
   checkpointLabel: string;

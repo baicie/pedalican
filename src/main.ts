@@ -1,5 +1,7 @@
 import './style.css';
 import { Game } from './game/Game';
+import { gameAudio } from './audio/AudioManager';
+import { initI18n, t } from './i18n/I18n';
 import { setupDeviceGate } from './ui/DeviceGate';
 
 function showFatalError(error: unknown): void {
@@ -8,8 +10,7 @@ function showFatalError(error: unknown): void {
   if (!loading) return;
   const message = loading.querySelector('span');
   if (message) {
-    message.textContent =
-      'The bicycle chain slipped. Please refresh the page to try again.';
+    message.textContent = t('error.start');
   }
   const bar = loading.querySelector('.loading__bar');
   if (bar instanceof HTMLElement) bar.style.display = 'none';
@@ -18,12 +19,21 @@ function showFatalError(error: unknown): void {
 }
 
 try {
+  initI18n();
+  gameAudio.bindGestureUnlock();
   const canvas = document.querySelector<HTMLCanvasElement>('#game-canvas');
   if (!canvas) throw new Error('Game canvas not found.');
   const game = new Game(canvas);
   game.start();
   setupDeviceGate();
-  window.addEventListener('beforeunload', () => game.dispose(), { once: true });
+  window.addEventListener(
+    'beforeunload',
+    () => {
+      gameAudio.dispose();
+      game.dispose();
+    },
+    { once: true },
+  );
 } catch (error) {
   showFatalError(error);
 }

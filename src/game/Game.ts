@@ -17,6 +17,8 @@ import { GameLoop, type LoopStats } from './GameLoop';
 import { GameState, type GamePhase, type HUDState, type RunResult } from './GameState';
 import { UIManager } from '../ui/UIManager';
 import { ParticleSystem } from '../utils/ParticleSystem';
+import { gameAudio } from '../audio/AudioManager';
+import { onLocaleChange, t, translateCheckpoint } from '../i18n/I18n';
 import { clamp, damp } from '../utils/math';
 
 export interface PelicanRiderDebugState {
@@ -107,6 +109,7 @@ export class Game {
   private fishWarning = false;
   private loadingHidden = false;
   private disposed = false;
+  private unsubscribeLocale: (() => void) | null = null;
   constructor(private readonly canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({
       canvas,
@@ -154,11 +157,25 @@ export class Game {
     this.input = new InputManager();
 
     this.ui = new UIManager({
-      onStart: () => this.startNewRun(),
-      onResume: () => this.resumeGame(),
-      onRestart: () => this.startNewRun(),
-      onMenu: () => this.enterMenu(),
+      onStart: () => {
+        gameAudio.unlock();
+        gameAudio.uiClick();
+        this.startNewRun();
+      },
+      onResume: () => {
+        gameAudio.uiClick();
+        this.resumeGame();
+      },
+      onRestart: () => {
+        gameAudio.uiClick();
+        this.startNewRun();
+      },
+      onMenu: () => {
+        gameAudio.uiClick();
+        this.enterMenu();
+      },
     });
+    this.unsubscribeLocale = onLocaleChange(() => this.updateHud());
 
     this.resetWorldState();
     this.ui.showMenu(this.score.bestScore, this.score.bestTime);
@@ -266,6 +283,7 @@ export class Game {
     this.ui.beginRide();
     this.ui.hideJumpPrompts();
     this.ui.showCountdown('3');
+    gameAudio.countdown(3);
     this.cameraController.setMode('chase');
     if (fromMenu || previous === 'menu') {
       this.cameraController.beginRide();
@@ -288,10 +306,12 @@ export class Game {
     if (digit !== this.lastCountdownDigit && digit > 0) {
       this.lastCountdownDigit = digit;
       this.ui.showCountdown(String(digit));
+      gameAudio.countdown(digit);
     }
     if (this.countdownRemaining <= 0) {
       this.state.phase = 'playing';
       this.ui.showCountdown('GO!');
+      gameAudio.go();
       this.offroadCooldown = 0;
     }
     this.cameraController.update(dt, this.makeCameraView());
@@ -304,12 +324,16 @@ export class Game {
     this.state.runTime += dt;
 
     const jumpPressed = this.input.consume('jump');
+    const wasGrounded = this.physics.grounded;
     this.physics.update(dt, {
       throttle: this.input.throttle,
       brake: this.input.brake,
       steer: this.input.steer,
       jumpPressed,
     });
+    if (jumpPressed && wasGrounded && !this.physics.grounded) {
+      gameAudio.jump();
+    }
     this.state.distance = Math.max(
       this.state.distance,
       this.level.distanceForZ(this.physics.position.z),
@@ -319,6 +343,7 @@ export class Game {
       this.suspension = -0.06;
       this.particles.landing(this.playerRoot.position.clone().setY(0.12));
       this.cameraController.triggerShake(0.035, 0.22);
+      gameAudio.land();
     }
     this.suspension = damp(this.suspension, 0, 11, dt);
 
@@ -349,7 +374,7 @@ export class Game {
 
     if (this.physics.offRoad && this.offroadCooldown <= 0) {
       this.offroadCooldown = 5.5;
-      this.ui.toast('Ease back onto the trail', '!', 1600);
+      this.ui.toast(t('toast.offroad'), '!', 1600);
     }
 
     this.cameraController.update(dt, this.makeCameraView());
@@ -432,10 +457,12 @@ export class Game {
       ),
       speedKmh: this.physics.speed * 3.6,
       motion: this.getMotionLabel(),
-      cameraLabel: this.cameraController.modeLabel as HUDState['cameraLabel'],
+      cameraLabel: this.getCameraLabel(),
       gapWarning: this.gapWarning,
       fishWarning: this.fishWarning,
-      checkpointLabel: nextCheckpoint?.label ?? 'LIGHTHOUSE',
+      checkpointLabel: nextCheckpoint
+        ? translateCheckpoint(nextCheckpoint.label)
+        : 'LIGHTHOUSE',
       bestScore: this.score.bestScore,
       bestTime: this.score.bestTime,
       fast: this.physics.speed > 10.8 && phase === 'playing',
@@ -444,15 +471,22 @@ export class Game {
   }
 
   private getMotionLabel(): string {
-    if (this.state.phase === 'crashed') return 'TUMBLING';
-    if (this.state.phase === 'paused') return 'CATCHING BREATH';
-    if (this.state.phase === 'countdown') return 'READY';
-    if (!this.physics.grounded) return 'AIRBORNE';
-    if (this.input.brake) return 'BRAKING';
-    if (this.physics.speed < 0.35) return 'READY';
-    if (this.physics.offRoad) return 'OFF TRAIL';
-    if (this.input.throttle) return 'PEDALING';
-    return 'COASTING';
+    if (this.state.phase === 'crashed') return t('motion.tumbling');
+    if (this.state.phase === 'paused') return t('motion.paused');
+    if (this.state.phase === 'countdown') return t('motion.ready');
+    if (!this.physics.grounded) return t('motion.airborne');
+    if (this.input.brake) return t('motion.braking');
+    if (this.physics.speed < 0.35) return t('motion.ready');
+    if (this.physics.offRoad) return t('motion.offtrail');
+    if (this.input.throttle) return t('motion.pedaling');
+    return t('motion.coasting');
+  }
+
+  private getCameraLabel(): string {
+    const mode = this.cameraController.mode;
+    if (mode === 'close') return t('camera.close');
+    if (mode === 'coast') return t('camera.coast');
+    return t('camera.chase');
   }
 
   private updateGroundAndPose(dt: number): void {
@@ -518,8 +552,12 @@ export class Game {
       points += this.score.registerFish(this.state.runTime, 1);
       this.particles.fishBurst(fish.position);
     }
-    const multiplierText = this.score.combo > 1 ? ` · x${(1 + (this.score.combo - 1) * 0.25).toFixed(2)}` : '';
-    this.ui.toast(`Fish +${points}${multiplierText}`, '✦', 1250);
+    gameAudio.fish(this.score.combo);
+    const multiplierText =
+      this.score.combo > 1
+        ? ` · x${(1 + (this.score.combo - 1) * 0.25).toFixed(2)}`
+        : '';
+    this.ui.toast(t('toast.fish', { points, multiplier: multiplierText }), '✦', 1250);
   }
 
   private checkRaceProgress(): void {
@@ -538,15 +576,19 @@ export class Game {
       this.particles.checkpoint(
         this.level.pointAt(checkpoint.z, 0).setY(2.2),
       );
+      gameAudio.checkpoint();
       this.ui.toast(
-        `${checkpoint.label} checkpoint${healed ? ' · heart refilled' : ''}`,
+        t('checkpoint.toast', {
+          label: translateCheckpoint(checkpoint.label),
+          healed: healed ? t('checkpoint.healed') : '',
+        }),
         '✓',
         2400,
       );
     }
 
     if (this.collisions.isAtFinish(this.physics)) {
-      this.finishRun(true, 'The lighthouse is yours.');
+      this.finishRun(true, t('finish.reason'));
     }
   }
 
@@ -601,6 +643,7 @@ export class Game {
     this.crashFatal = fatal;
     this.crashFromHazard = reason === 'gap' || reason === 'offroad';
     this.crashReason = this.describeCrash(reason);
+    gameAudio.crash();
     this.crashDuration = this.crashFromHazard ? 1.35 : 1.1;
     this.crashTimer = this.crashDuration;
     this.crashProgress = 0;
@@ -644,7 +687,7 @@ export class Game {
     this.safeTrailTimer = 0;
     this.syncPlayerRoot(0);
     this.cameraController.snapBehind(this.makeCameraView());
-    this.ui.toast('Up you get — back on the saddle', '↻', 1500);
+    this.ui.toast(t('toast.recover'), '↻', 1500);
     this.updateHud();
   }
 
@@ -662,6 +705,9 @@ export class Game {
       this.particles.checkpoint(
         this.level.pointAt(this.level.data.finishZ, 0).setY(2.0),
       );
+      gameAudio.finish();
+    } else {
+      gameAudio.gameOver();
     }
     this.physics.speed = 0;
     const newBest = this.score.recordRun(this.score.score, this.state.runTime, victory);
@@ -775,16 +821,42 @@ export class Game {
 
   private handleGlobalInput(): void {
     if (this.input.consume('pause')) {
-      if (this.state.phase === 'playing') this.pauseGame();
-      else if (this.state.phase === 'paused') this.resumeGame();
+      if (this.state.phase === 'playing') {
+        gameAudio.uiClick();
+        this.pauseGame();
+      } else if (this.state.phase === 'paused') {
+        gameAudio.uiClick();
+        this.resumeGame();
+      }
     }
     if (this.input.consume('restart')) {
-      if (this.state.phase !== 'menu') this.startNewRun();
+      if (this.state.phase !== 'menu') {
+        gameAudio.uiClick();
+        this.startNewRun();
+      }
     }
     if (this.input.consume('camera')) {
       if (this.state.phase === 'playing' || this.state.phase === 'countdown') {
+        gameAudio.uiClick();
         this.cameraController.cycleMode();
-        this.ui.toast(this.cameraController.modeLabel, '◉', 950);
+        this.ui.toast(this.getCameraLabel(), '◉', 950);
+      }
+    }
+    if (this.input.consume('mute')) {
+      gameAudio.unlock();
+      gameAudio.uiClick();
+      const muted = gameAudio.toggleMuted();
+      if (
+        this.state.phase === 'playing' ||
+        this.state.phase === 'paused' ||
+        this.state.phase === 'countdown' ||
+        this.state.phase === 'crashed'
+      ) {
+        this.ui.toast(
+          t(muted ? 'toast.soundOff' : 'toast.soundOn'),
+          muted ? '♪' : '♫',
+          1100,
+        );
       }
     }
   }
@@ -815,6 +887,7 @@ export class Game {
         break;
     }
 
+    gameAudio.update(dt, this.physics.speed, this.physics.grounded, phase);
     this.collectibles.update(dt, this.visualTime);
     this.environment.update(dt, this.visualTime, this.camera.position);
     this.world.update(dt, this.visualTime);
@@ -887,17 +960,17 @@ export class Game {
   private describeCrash(reason: CrashReason): string {
     switch (reason) {
       case 'rock':
-        return 'Clipped a boulder — ouch.';
+        return t('crash.rock');
       case 'log':
-        return 'Hugged a log a little too closely.';
+        return t('crash.log');
       case 'driftwood':
-        return 'The driftwood won that round.';
+        return t('crash.driftwood');
       case 'gap':
-        return 'Missed the gap — splash!';
+        return t('crash.gap');
       case 'offroad':
-        return 'Wobbled off the trail.';
+        return t('crash.offroad');
       default:
-        return 'A little spill on the coast road.';
+        return t('crash.default');
     }
   }
 
@@ -905,6 +978,7 @@ export class Game {
     if (this.disposed) return;
     this.disposed = true;
     this.loop.stop();
+    this.unsubscribeLocale?.();
     this.input.dispose();
     window.removeEventListener('resize', this.handleResize);
     document.removeEventListener('visibilitychange', this.handleVisibility);

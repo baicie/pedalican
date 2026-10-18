@@ -1,4 +1,5 @@
 import type { RunResult } from '../game/GameState';
+import { onLocaleChange, t } from '../i18n/I18n';
 import { formatScoreShort, formatTime } from '../utils/math';
 
 export interface ResultCallbacks {
@@ -36,6 +37,7 @@ export class GameOverPanels {
   private readonly resultBurst = requiredElement<HTMLElement>('result-burst');
   private resultCallbacks: ResultCallbacks | null = null;
   private pauseCallbacks: PauseCallbacks | null = null;
+  private lastResult: RunResult | null = null;
 
   constructor() {
     this.resumeButton.addEventListener('click', () => this.pauseCallbacks?.onResume());
@@ -44,6 +46,9 @@ export class GameOverPanels {
     this.againButton.addEventListener('click', () => this.resultCallbacks?.onAgain());
     this.resultMenu.addEventListener('click', () => this.resultCallbacks?.onMenu());
     this.resultBest.classList.add('is-hidden');
+    onLocaleChange(() => {
+      if (this.lastResult) this.renderResult();
+    });
   }
 
   bindResults(callbacks: ResultCallbacks): void {
@@ -67,24 +72,39 @@ export class GameOverPanels {
   showResult(result: RunResult): void {
     this.pauseScreen.classList.remove('is-visible');
     this.resultScreen.classList.add('is-visible');
-    this.resultTitle.textContent = result.victory ? 'Beautiful ride!' : 'Down in the sand';
-    this.resultKicker.textContent = result.victory ? 'THE LIGHTHOUSE IS YOURS' : 'THE TIDE CALLED IT';
+    this.lastResult = result;
+    this.renderResult();
+    this.againButton.focus({ preventScroll: true });
+  }
+
+  private renderResult(): void {
+    const result = this.lastResult;
+    if (!result) return;
+    this.resultTitle.textContent = result.victory
+      ? t('result.victoryTitle')
+      : t('result.gameoverTitle');
+    this.resultKicker.textContent = result.victory
+      ? t('result.victoryKicker')
+      : t('result.gameoverKicker');
     this.resultCopy.textContent = result.victory
-      ? `You rolled into Pelican Point with ${result.fish} fish and ${result.crashes} ${
-          result.crashes === 1 ? 'spill' : 'spills'
-        } along the way.`
-      : `${result.reason} The coast won this round, but the pelican is already dusting off.`;
+      ? t('result.victoryCopy', {
+          fish: result.fish,
+          crashes: result.crashes,
+          spills: result.crashes === 1 ? 'spill' : 'spills',
+        })
+      : t('result.gameoverCopy', { reason: result.reason });
     this.resultScore.textContent = formatScoreShort(result.score);
     this.resultFish.textContent = `${result.fish} / ${result.totalFish}`;
     this.resultTime.textContent = formatTime(result.time);
     this.resultCrashes.textContent = String(result.crashes);
     this.resultBest.classList.toggle('is-hidden', !result.newBest);
-    this.resultBest.textContent = result.victory ? 'NEW PERSONAL BEST' : 'BEST SCORE SO FAR';
+    this.resultBest.textContent = result.victory
+      ? t('result.bestNew')
+      : t('result.bestScore');
     this.resultFootnote.textContent = result.victory
-      ? 'Tip: fish chains are worth more. Try a full basket next time.'
-      : 'Tip: brake early, then hop logs and gaps rather than steering at the last moment.';
+      ? t('result.victoryTip')
+      : t('result.gameoverTip');
     this.resultBurst.textContent = result.victory ? '✦' : '…';
-    this.againButton.focus({ preventScroll: true });
   }
 
   hideResult(): void {

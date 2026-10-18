@@ -1,9 +1,13 @@
-# Pelican Rider
+# Pelican Rider / 鹈鹕骑士
 
 A complete, playable 3D browser game about a pelican taking a mechanically
 coherent bicycle for a slightly overconfident ride along a coastal cycle path.
+The interface supports English and Simplified Chinese, with synthesized sound
+effects and ambient audio.
 
 ![Pelican Rider main menu](screens/menu.png)
+
+![Pelican Rider 中文主菜单](screens/menu-zh.png)
 
 ## Local Development
 
@@ -55,6 +59,11 @@ and pass both checkpoints before the three hearts run out.
 | `C` | Cycle camera (chase → close → coast) |
 | `P` / `Esc` | Pause / resume |
 | `R` | Restart the ride |
+| `M` | Mute / unmute sound |
+
+The menu and pause panels include visible **中文 / EN** language and sound
+controls. The language follows the browser locale on first visit, can be
+switched at any time from those panels, and is saved in `localStorage`.
 
 - **Fish** are worth 100 points and chain into a combo (up to ×2.5).
 - Fish hovering above the road need a small jump.
@@ -106,14 +115,22 @@ and pass both checkpoints before the three hearts run out.
   models, images, or audio assets are used.
 - Instanced rendering for repeated scenery, fish, grass, flowers, and road
   furniture.
+- A procedural Web Audio soundscape: ocean swells, wind, bicycle ticks, UI
+  clicks, countdown tones, jump/landing, fish chimes, checkpoint stings, crash
+  impacts, a finish fanfare, and a game-over motif. Audio starts only after the
+  first user gesture, so browser autoplay rules are respected.
 - Complete DOM UI: loading state, main menu, controls card, best score,
   countdown, HUD, speedometer, hearts, route progress, fish/distance readouts,
-  camera label, gap/fish prompts, toasts, pause, results, and victory/game-over
-  states.
+  camera label, gap/fish prompts, toasts, pause, results, victory/game-over
+  states, visible language/sound preferences, and a keyboard-required gate for
+  touch-first devices.
+- English and Simplified Chinese localisation, including document title,
+  description, menu, HUD, motion/camera labels, pause/results, toasts, crash
+  messages, and mobile/keyboard prompts. Language and mute preferences persist
+  locally.
 - Share-ready document metadata (title, description, canonical URL, Open
   Graph/Twitter cards and a generated 1200×630 preview), a real SVG favicon,
-  a JavaScript-disabled fallback, and a keyboard-required gate for touch-first
-  devices.
+  and a JavaScript-disabled bilingual fallback.
 
 ### Gameplay
 
@@ -139,6 +156,10 @@ src/
     GameLoop.ts            rAF loop and rolling frame statistics
     InputManager.ts        keyboard state and edge-triggered actions
     GameState.ts           phase, hearts, crashes, timer, result types
+  audio/
+    AudioManager.ts        procedural Web Audio ambience and event sounds
+  i18n/
+    I18n.ts                English/Chinese dictionaries and DOM localisation
   character/
     Pelican.ts             procedural rig, meshes, and IK pose solver
     Bicycle.ts             mechanical bicycle rig and moving anchors
@@ -206,8 +227,8 @@ The repository uses **npm** (`package-lock.json` is committed; there is no
 - **Build command:** `npm run build` (runs `tsc --noEmit` before Vite).
 - **Publish directory:** `dist`.
 - **Node runtime:** 22, also recorded in `.nvmrc`.
-- **Deploy Previews:** enabled in the Netlify site settings for pull requests
-  against `main`; Netlify builds them with the same configuration.
+- **Deploy Previews:** enable them in the Netlify site settings for pull
+  requests against `main`; Netlify builds them with the same configuration.
 - **Failed builds:** Netlify does not promote a failed build to the live site.
 - **Rollback:** use Netlify's deploy history to publish a previous successful
   deploy.
@@ -220,28 +241,22 @@ Netlify site served at the domain root. `og:url`, `canonical`, and
 `og:image` are made absolute at build time from Netlify's `URL` environment
 variable (or `DEPLOY_PRIME_URL` for previews).
 
-### Connect this local repository to GitHub
+### Push to GitHub
 
-This workspace was initialized as a local Git repository with its changes
-committed, but no GitHub remote is configured. Once the repository exists on
-GitHub, run:
-
-```bash
-git remote add origin https://github.com/<github-account>/pelican-rider.git
-git push -u origin main
-```
-
-With the GitHub CLI already authenticated:
+The local repository already has a GitHub `origin` remote and `main` tracks
+`origin/main`. Push normal commits with:
 
 ```bash
-gh repo create <github-account>/pelican-rider --public --source=. --remote=origin --push
+git push origin main
 ```
 
-Do not force-push and do not replace an existing unrelated remote.
+Do not force-push and do not replace an existing unrelated remote. If this
+checkout is ever recreated without a remote, add it with `git remote add origin
+<repository-url>` and push with `git push -u origin main`.
 
 ## Netlify Setup
 
-1. Push the local `main` branch to GitHub using the commands above.
+1. Push the local `main` branch to GitHub with `git push origin main`.
 2. Sign in to [Netlify](https://app.netlify.com/) with the GitHub account that
    owns the repository.
 3. Choose **Add new site → Import an existing project → GitHub**, authorize the
@@ -263,9 +278,10 @@ Do not force-push and do not replace an existing unrelated remote.
 8. To roll back, open **Deploys**, choose an earlier successful deploy, and use
    **Publish deploy**. Netlify keeps the deploy history.
 
-No Netlify site was created by this workspace because no Netlify credential or
-site target was available. The production URL should be copied from Netlify
-after the first successful deploy; it is intentionally not fabricated here.
+The production URL is not stored in the repository because the Netlify site
+URL is owned by the Netlify account. Copy it from the site dashboard after the
+first successful deploy. A push to `main` triggers a new deploy if the Netlify
+Git integration is connected; otherwise complete the import steps above once.
 
 ## Troubleshooting
 
@@ -352,6 +368,18 @@ The following was actually run on the development machine:
 - The mobile viewport (390×844, touch-first) showed the blocking keyboard gate;
   **I have a keyboard** dismissed it and exposed the menu. The gate had pointer
   events and was the topmost element while open.
+- Audio verification: a wrapped `AudioContext` was created on the first pointer
+  gesture, reached `running`, and the sound toggle persisted its state in
+  `localStorage`; the `M` shortcut updated the button/aria state and displayed
+  the localized toast. The tested countdown, jump/landing, UI, and finish audio
+  paths executed without errors. Headless Chrome cannot judge perceived
+  loudness, so the mix was checked for runtime correctness rather than
+  listened to by a human.
+- Localization verification: a fresh `zh-CN` browser context automatically
+  opened in Chinese; switching to `EN` and back updated the title, menu, HUD,
+  pause screen, results screen, controls, and mobile keyboard gate. The choice
+  survived a reload via `localStorage`. The bilingual menu was checked at
+  1440×900, 1280×720, and 1024×768 without clipped controls.
 - A Netlify-like production build with `URL` set was inspected: canonical and
   Open Graph/Twitter URLs were absolute, no `%SITE_URL%` placeholders remained,
   and no `localhost`/`127.0.0.1` URLs were present in `dist/index.html`.
@@ -363,7 +391,7 @@ The following was actually run on the development machine:
   result buttons, `R` restart, and localStorage best-score persistence.
   Final runs reported no page errors.
 - The build prints Vite's standard >500 kB chunk warning because Three.js is
-  bundled into the main chunk; the delivered JS is ~710 kB minified / ~186 kB
+  bundled into the main chunk; the delivered JS is ~729 kB minified / ~193 kB
   gzip.
 
 **Frame rate** (the game's own rolling `GameLoop` statistics, 1440×900 CSS
@@ -374,7 +402,7 @@ an NVIDIA GeForce RTX 3050):
 | --- | --- |
 | 1440×900, normal vsync | 59.95 FPS, 16.68 ms average, 16.8 ms p95 |
 | 1920×1080, normal vsync | 59.95 FPS, 16.68 ms average, 16.9 ms p95 |
-| 1440×900, vsync/frame-limit disabled | 135.7 FPS, 7.37 ms average, 8.5 ms p95 |
+| 1440×900, vsync/frame-limit disabled | 134.9 FPS, 7.42 ms average, 8.4 ms p95 |
 
 Renderer statistics during those runs were about 1,340 draw calls, 301k
 triangles, 699 geometries, and 21 textures, including the shadow pass. The
@@ -384,7 +412,8 @@ guarantee for integrated GPUs or 4K displays.
 
 ## Honest limitations
 
-- Desktop keyboard only; there is no touch, gamepad, or audio layer.
+- Desktop keyboard only; there are no touch or gamepad controls. Audio is
+  procedural Web Audio rather than recorded music or voice-over.
 - The course is one fixed, seeded 780 m level. Runs are deterministic; the
   difficulty ramps along the route, but there is no endless generation.
 - Balance is represented by automatic lean, wobble, off-road instability, and
@@ -398,10 +427,16 @@ guarantee for integrated GPUs or 4K displays.
   (`startRun`, `skipCountdown`, `getDebugState`, `teleportNearFinish`) and
   `window.__pelicanGame` for inspection/performance checks. It does not affect
   normal play.
+- All interface, game-state, toast, and result text is localised. Diegetic
+  in-world signposts remain in English as part of the visual identity.
+- Sound is synthesised at runtime and is intentionally lightweight; there is
+  no music track or voice-over. Browsers require the first click or key press
+  before audio can start.
 
 ## Asset and license notes
 
 All game visuals are generated at runtime with Three.js geometry, Canvas 2D
-textures, CSS, and inline SVG. No external 3D models, image assets, paid
-assets, or network-hosted assets are required. Fonts are local system font
-stacks.
+textures, CSS, and inline SVG. Sound is synthesized with the Web Audio API. No
+external 3D models, image assets, audio files, paid assets, or network-hosted
+assets are required. Fonts are local system font stacks; Chinese falls back to
+the operating system's CJK sans-serif fonts.

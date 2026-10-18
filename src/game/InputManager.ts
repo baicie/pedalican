@@ -6,7 +6,8 @@ export type GameAction =
   | 'jump'
   | 'pause'
   | 'restart'
-  | 'camera';
+  | 'camera'
+  | 'mute';
 
 const KEY_MAP: Record<string, GameAction> = {
   KeyW: 'accelerate',
@@ -22,6 +23,7 @@ const KEY_MAP: Record<string, GameAction> = {
   Escape: 'pause',
   KeyR: 'restart',
   KeyC: 'camera',
+  KeyM: 'mute',
 };
 
 const PREVENT_DEFAULT = new Set([

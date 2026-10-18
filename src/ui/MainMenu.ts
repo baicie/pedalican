@@ -1,3 +1,4 @@
+import { onLocaleChange, t } from '../i18n/I18n';
 import { formatScoreShort, formatTime } from '../utils/math';
 
 export class MainMenu {
@@ -6,12 +7,15 @@ export class MainMenu {
   private readonly bestChip = requiredElement<HTMLElement>('menu-best');
   private readonly bestValue = this.bestChip.querySelector('strong');
   private onStart: () => void = () => {};
+  private bestScore = 0;
+  private bestTime: number | null = null;
 
   constructor() {
     this.startButton.addEventListener('click', () => {
       this.onStart();
     });
     window.addEventListener('keydown', this.handleKeydown);
+    onLocaleChange(() => this.renderBest());
   }
 
   bindStart(callback: () => void): void {
@@ -21,12 +25,9 @@ export class MainMenu {
   show(bestScore: number, bestTime: number | null): void {
     this.screen.classList.add('is-visible');
     this.startButton.focus({ preventScroll: true });
-    if (this.bestValue) {
-      this.bestValue.textContent =
-        bestScore > 0
-          ? `${formatScoreShort(bestScore)} pts${bestTime !== null ? ` · ${formatTime(bestTime)}` : ''}`
-          : 'No ride logged yet';
-    }
+    this.bestScore = bestScore;
+    this.bestTime = bestTime;
+    this.renderBest();
   }
 
   hide(): void {
@@ -39,20 +40,36 @@ export class MainMenu {
   }
 
   setBest(bestScore: number, bestTime: number | null): void {
-    if (this.bestValue) {
-      this.bestValue.textContent =
-        bestScore > 0
-          ? `${formatScoreShort(bestScore)} pts${bestTime !== null ? ` · ${formatTime(bestTime)}` : ''}`
-          : 'No ride logged yet';
+    this.bestScore = bestScore;
+    this.bestTime = bestTime;
+    this.renderBest();
+  }
+
+  private renderBest(): void {
+    if (!this.bestValue) return;
+    if (this.bestScore <= 0) {
+      this.bestValue.textContent = t('menu.bestEmpty');
+      return;
     }
+    const time = this.bestTime !== null ? ` · ${formatTime(this.bestTime)}` : '';
+    this.bestValue.textContent = t('menu.bestScore', {
+      score: formatScoreShort(this.bestScore),
+      time,
+    });
   }
 
   private readonly handleKeydown = (event: KeyboardEvent): void => {
-    if (!this.isVisible()) return;
-    if (event.code === 'Enter') {
-      event.preventDefault();
-      this.onStart();
+    if (!this.isVisible() || event.code !== 'Enter') return;
+    const target = event.target;
+    if (
+      target instanceof HTMLElement &&
+      target.closest('button, a, input, select, textarea')
+    ) {
+      // Let the focused control (language, sound, start, gate) handle Enter.
+      return;
     }
+    event.preventDefault();
+    this.onStart();
   };
 }
 

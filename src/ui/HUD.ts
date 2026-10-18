@@ -1,4 +1,5 @@
 import type { HUDState } from '../game/GameState';
+import { t } from '../i18n/I18n';
 import { formatScore, formatTime } from '../utils/math';
 
 /**
@@ -52,7 +53,11 @@ export class HUD {
   update(state: HUDState): void {
     this.setText(this.score, 'score', formatScore(state.score));
     this.setText(this.fish, 'fish', String(state.fish));
-    this.setText(this.distance, 'distance', `${Math.floor(state.distance)} m`);
+    this.setText(
+      this.distance,
+      'distance',
+      `${Math.floor(state.distance)} ${t('hud.distanceUnit')}`,
+    );
     this.setText(this.time, 'time', formatTime(state.time));
     this.setText(this.best, 'best', state.bestScore > 0 ? formatScore(state.bestScore).replace(/^0+/, '') : '—');
     this.setText(this.speed, 'speed', String(Math.round(state.speedKmh)));
