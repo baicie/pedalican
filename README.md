@@ -34,8 +34,8 @@ in `dist/` and needs no backend, API routes, or environment variables.
 - `/favicon.svg` — browser icon.
 - `/og-image.jpg` — 1200×630 Open Graph/Twitter preview image.
 - The canonical URL and Open Graph image URL use the Netlify-provided `URL`
-  (or `DEPLOY_PRIME_URL` on deploy previews) at build time. Local builds fall
-  back to `http://localhost:5173`; Netlify production builds get the real
+  (or `DEPLOY_PRIME_URL` on deploy previews) at build time. Local builds keep
+  those metadata URLs root-relative; Netlify production builds get the real
   HTTPS site URL automatically.
 - Touch-first devices see a friendly keyboard-required gate. A physical
   keyboard can still be used via **I have a keyboard**.

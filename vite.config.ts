@@ -1,12 +1,11 @@
 import { defineConfig } from 'vite';
 
 // Netlify injects URL (and DEPLOY_PRIME_URL for deploy previews) during the
-// build. The fallback only affects local development metadata.
-const siteUrl = (
-  process.env.URL ||
-  process.env.DEPLOY_PRIME_URL ||
-  'http://localhost:5173'
-).replace(/\/+$/, '');
+// build. Without it, metadata stays root-relative for local previews.
+const siteUrl = (process.env.URL || process.env.DEPLOY_PRIME_URL || '').replace(
+  /\/+$/,
+  '',
+);
 
 export default defineConfig({
   // Pelican Rider is deployed at the Netlify domain root.
