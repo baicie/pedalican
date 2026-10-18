@@ -398,9 +398,6 @@ guarantee for integrated GPUs or 4K displays.
   (`startRun`, `skipCountdown`, `getDebugState`, `teleportNearFinish`) and
   `window.__pelicanGame` for inspection/performance checks. It does not affect
   normal play.
-- The workspace root still contains unrelated image/SVG crops from earlier
-  work; they are not loaded by the game. Only `index.html`, `src/`, `screens/`,
-  and the config files are used by Vite.
 
 ## Asset and license notes
 
