@@ -26,9 +26,16 @@ Vite prints the local URL (by default `http://127.0.0.1:5173/`).
 
 ```bash
 npm run typecheck   # strict TypeScript check
+npm test            # committed Vitest regression suite
 npm run build       # type check + production bundle in dist/
 npm run preview     # serve the production build (http://127.0.0.1:4173/)
+npm run test:e2e    # Playwright smoke test against the production preview
 ```
+
+`npm run test:e2e` expects a current `dist/` build and a Playwright Chromium
+browser (`npx playwright install chromium`). The workflow in
+`.github/workflows/ci.yml` runs typecheck, Vitest, build, and the browser smoke
+test on every push and pull request against `main`.
 
 The game is a single static page. The production build is entirely contained
 in `dist/` and needs no backend, API routes, or environment variables.
@@ -364,10 +371,19 @@ laptop, or connect a physical keyboard and choose **I have a keyboard**.
 The following was actually run on the development machine:
 
 - `npm ci` — passed from the committed `package-lock.json` after a clean
-  reinstall (23 packages; all lockfile entries resolve to registry.npmjs.org
-  with no empty versions).
+  reinstall; all lockfile entries resolve to registry.npmjs.org with no empty
+  versions.
 - `npm run typecheck` — passed with strict TypeScript.
+- `npm test` — passed: 20 Vitest tests across game state, scoring, level
+  generation, bicycle physics, collision checks, keyboard input, and the fixed
+  simulation loop.
+- `npm run test:e2e` — passed: Playwright smoke test against the production
+  preview covering Chinese default, debug API absence, start, five-heart HUD,
+  acceleration, countdown, pause, and resume.
 - `npm run build` — passed; production bundle written to `dist/`.
+- `GameLoop` now advances simulation in fixed 1/60 s steps with a five-step
+  catch-up cap and renders once per browser frame, so ordinary frame-rate
+  variation no longer changes physics/countdown speed.
 - Production preview verified in Chrome at `http://127.0.0.1:4173/`: the two
   hashed JS/CSS assets, `/favicon.svg`, and `/og-image.jpg` all returned HTTP
   200; the menu loaded; the game started and responded to keyboard input;
@@ -397,15 +413,15 @@ The following was actually run on the development machine:
 - A Netlify-like production build with `URL` set was inspected: canonical and
   Open Graph/Twitter URLs were absolute, no `%SITE_URL%` placeholders remained,
   and no `localhost`/`127.0.0.1` URLs were present in `dist/index.html`.
-- Automated Chrome playthroughs (temporary Playwright harness, not shipped)
-  covered: menu → countdown → play, fish collection and HUD/toast, jump and
-  landing, all three camera modes, pause/resume via `Esc` and buttons,
-  checkpoint healing, successful gap jump, failed gap and checkpoint respawn,
-  bridge crossing, obstacle crash and recovery, game over, restart, victory,
-  result buttons, `R` restart, and localStorage best-score persistence.
-  Final runs reported no page errors.
+- Historical Chrome playthroughs covered: menu → countdown → play, fish
+  collection and HUD/toast, jump and landing, all three camera modes,
+  pause/resume via `Esc` and buttons, checkpoint healing, successful gap jump,
+  failed gap and checkpoint respawn, bridge crossing, obstacle crash and
+  recovery, game over, restart, victory, result buttons, `R` restart, and
+  localStorage best-score persistence. The committed Playwright smoke test now
+  covers the release-critical menu/countdown/pause path automatically.
 - The build prints Vite's standard >500 kB chunk warning because Three.js is
-  bundled into the main chunk; the delivered JS is ~729 kB minified / ~193 kB
+  bundled into the main chunk; the delivered JS is ~731 kB minified / ~193 kB
   gzip. The 96 kbps soundtrack is emitted separately as a ~2.37 MB on-demand
   asset, so it does not block first paint.
 
@@ -439,10 +455,11 @@ guarantee for integrated GPUs or 4K displays.
   sculpted meshes.
 - Performance is measured on an RTX 3050. Integrated GPUs will likely need a
   lower resolution; there is no settings menu or dynamic quality scaler.
-- A developer hook is intentionally left exposed at `window.__pelicanRider`
-  (`startRun`, `skipCountdown`, `getDebugState`, `teleportNearFinish`) and
-  `window.__pelicanGame` for inspection/performance checks. It does not affect
-  normal play.
+- A developer hook (`startRun`, `skipCountdown`, `getDebugState`,
+  `teleportNearFinish`) is exposed as `window.__pelicanRider` only in Vite
+  development builds. `window.__pelicanGame` is also development-only, so
+  production builds cannot use the teleport/cheat helpers or contaminate best
+  records.
 - All interface, game-state, toast, and result text is localised. Diegetic
   in-world signposts remain in English as part of the visual identity.
 - Sound effects are synthesised at runtime; the background music is a 96 kbps

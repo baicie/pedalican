@@ -22,6 +22,9 @@ export class UIManager {
   readonly panels = new GameOverPanels();
   private readonly loading = document.getElementById('loading');
   private readonly canvas = document.getElementById('game-canvas') as HTMLCanvasElement | null;
+  private readonly preferenceController = new AbortController();
+  private unsubscribeLocale: (() => void) | null = null;
+  private unsubscribeMute: (() => void) | null = null;
 
   constructor(handlers: UIHandlers) {
     this.menu.bindStart(handlers.onStart);
@@ -39,19 +42,27 @@ export class UIManager {
 
   private bindPreferences(): void {
     document.querySelectorAll<HTMLButtonElement>('.js-locale-toggle').forEach((button) => {
-      button.addEventListener('click', () => {
-        gameAudio.uiClick();
-        toggleLocale();
-      });
+      button.addEventListener(
+        'click',
+        () => {
+          gameAudio.uiClick();
+          toggleLocale();
+        },
+        { signal: this.preferenceController.signal },
+      );
     });
     document.querySelectorAll<HTMLButtonElement>('.js-sound-toggle').forEach((button) => {
-      button.addEventListener('click', () => {
-        gameAudio.uiClick();
-        gameAudio.toggleMuted();
-      });
+      button.addEventListener(
+        'click',
+        () => {
+          gameAudio.uiClick();
+          gameAudio.toggleMuted();
+        },
+        { signal: this.preferenceController.signal },
+      );
     });
-    onLocaleChange(() => this.refreshPreferences());
-    gameAudio.onMuteChange(() => this.refreshPreferences());
+    this.unsubscribeLocale = onLocaleChange(() => this.refreshPreferences());
+    this.unsubscribeMute = gameAudio.onMuteChange(() => this.refreshPreferences());
     this.refreshPreferences();
   }
 
@@ -158,5 +169,16 @@ export class UIManager {
 
   refreshMenuBest(bestScore: number, bestTime: number | null): void {
     this.menu.setBest(bestScore, bestTime);
+  }
+
+  dispose(): void {
+    this.preferenceController.abort();
+    this.unsubscribeLocale?.();
+    this.unsubscribeMute?.();
+    this.unsubscribeLocale = null;
+    this.unsubscribeMute = null;
+    this.hud.dispose();
+    this.menu.dispose();
+    this.panels.dispose();
   }
 }

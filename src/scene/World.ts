@@ -4,6 +4,7 @@ import { createSignTexture, createSunTexture } from '../utils/canvas';
 import {
   createPalmFrondGeometry,
   createTaperedTube,
+  disposeObject3D,
   mergeSimpleGeometries,
 } from '../utils/geometry';
 import { clamp, mulberry32, randomRange, TAU } from '../utils/math';
@@ -1628,15 +1629,6 @@ export class World {
   }
 
   dispose(): void {
-    this.root.traverse((object) => {
-      if (object instanceof THREE.Mesh) {
-        object.geometry.dispose();
-        if (Array.isArray(object.material)) {
-          object.material.forEach((material) => material.dispose());
-        } else {
-          object.material.dispose();
-        }
-      }
-    });
+    disposeObject3D(this.root);
   }
 }

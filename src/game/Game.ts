@@ -177,9 +177,9 @@ export class Game {
 
     this.resetWorldState();
     this.ui.showMenu(this.score.bestScore, this.score.bestTime);
-    this.loop = new GameLoop(this.frame);
+    this.loop = new GameLoop(this.updateFrame, this.renderFrame);
     this.bindEvents();
-    this.installDebugApi();
+    if (import.meta.env.DEV) this.installDebugApi();
     this.updateHud();
   }
 
@@ -859,7 +859,7 @@ export class Game {
     }
   }
 
-  private readonly frame = (dt: number, _elapsed: number): void => {
+  private readonly updateFrame = (dt: number, _elapsed: number): void => {
     if (this.disposed) return;
     this.visualTime += dt;
     this.handleGlobalInput();
@@ -891,13 +891,17 @@ export class Game {
     this.world.update(dt, this.visualTime);
     this.particles.update(dt);
     this.lighting.update(this.playerRoot.position);
-    this.renderer.render(this.scene, this.camera);
     this.input.endFrame();
 
     if (!this.loadingHidden) {
       this.loadingHidden = true;
       this.ui.hideLoading();
     }
+  };
+
+  private readonly renderFrame = (): void => {
+    if (this.disposed) return;
+    this.renderer.render(this.scene, this.camera);
   };
 
   private installDebugApi(): void {
@@ -978,6 +982,7 @@ export class Game {
     this.loop.stop();
     this.unsubscribeLocale?.();
     this.input.dispose();
+    this.ui.dispose();
     window.removeEventListener('resize', this.handleResize);
     document.removeEventListener('visibilitychange', this.handleVisibility);
     this.environment.dispose();
@@ -985,8 +990,12 @@ export class Game {
     this.collectibles.dispose();
     this.obstacles.dispose();
     this.particles.dispose();
+    this.bicycle.dispose();
     this.pelican.dispose();
     this.renderer.dispose();
-    delete window.__pelicanRider;
+    if (import.meta.env.DEV) {
+      delete window.__pelicanRider;
+      delete (window as unknown as { __pelicanGame?: Game }).__pelicanGame;
+    }
   }
 }

@@ -103,6 +103,10 @@ export class HUD {
     this.countdown.classList.remove('is-visible');
   }
 
+  dispose(): void {
+    this.clearTransient();
+  }
+
   hideJumpPrompts(): void {
     this.gapPrompt.classList.remove('is-visible');
     this.fishPrompt.classList.remove('is-visible');

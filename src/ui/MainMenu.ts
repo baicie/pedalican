@@ -9,13 +9,21 @@ export class MainMenu {
   private onStart: () => void = () => {};
   private bestScore = 0;
   private bestTime: number | null = null;
+  private readonly listenerController = new AbortController();
+  private unsubscribeLocale: (() => void) | null = null;
 
   constructor() {
-    this.startButton.addEventListener('click', () => {
-      this.onStart();
+    this.startButton.addEventListener(
+      'click',
+      () => {
+        this.onStart();
+      },
+      { signal: this.listenerController.signal },
+    );
+    window.addEventListener('keydown', this.handleKeydown, {
+      signal: this.listenerController.signal,
     });
-    window.addEventListener('keydown', this.handleKeydown);
-    onLocaleChange(() => this.renderBest());
+    this.unsubscribeLocale = onLocaleChange(() => this.renderBest());
   }
 
   bindStart(callback: () => void): void {
@@ -71,6 +79,12 @@ export class MainMenu {
     event.preventDefault();
     this.onStart();
   };
+
+  dispose(): void {
+    this.listenerController.abort();
+    this.unsubscribeLocale?.();
+    this.unsubscribeLocale = null;
+  }
 }
 
 function requiredElement<T extends HTMLElement>(id: string): T {

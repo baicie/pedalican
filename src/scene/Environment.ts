@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { LevelManager } from '../gameplay/LevelManager';
 import { SUN_DIRECTION } from './Lighting';
 import { createSunTexture } from '../utils/canvas';
+import { disposeObject3D } from '../utils/geometry';
 import { mulberry32, randomRange, TAU } from '../utils/math';
 
 interface Cloud {
@@ -458,15 +459,6 @@ export class Environment {
   }
 
   dispose(): void {
-    this.root.traverse((object) => {
-      if (object instanceof THREE.Mesh) {
-        object.geometry.dispose();
-        if (Array.isArray(object.material)) {
-          object.material.forEach((material) => material.dispose());
-        } else {
-          object.material.dispose();
-        }
-      }
-    });
+    disposeObject3D(this.root);
   }
 }

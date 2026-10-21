@@ -288,14 +288,18 @@ export function disposeObject3D(root: THREE.Object3D): void {
   const geometries = new Set<THREE.BufferGeometry>();
   const materials = new Set<THREE.Material>();
   root.traverse((object) => {
-    if (object instanceof THREE.Mesh) {
-      if (object.geometry) geometries.add(object.geometry);
-      const material = object.material;
-      if (Array.isArray(material)) {
-        material.forEach((entry) => materials.add(entry));
-      } else if (material) {
-        materials.add(material);
-      }
+    const renderable = object as THREE.Object3D & {
+      geometry?: THREE.BufferGeometry;
+      material?: THREE.Material | THREE.Material[];
+    };
+    if (renderable.geometry instanceof THREE.BufferGeometry) {
+      geometries.add(renderable.geometry);
+    }
+    const material = renderable.material;
+    if (Array.isArray(material)) {
+      material.forEach((entry) => materials.add(entry));
+    } else if (material) {
+      materials.add(material);
     }
   });
   geometries.forEach((geometry) => geometry.dispose());
@@ -305,6 +309,7 @@ export function disposeObject3D(root: THREE.Object3D): void {
     }
     material.dispose();
   });
+  root.removeFromParent();
 }
 
 export function damp(current: number, target: number, lambda: number, dt: number): number {

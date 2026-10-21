@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { clamp, TAU } from '../utils/math';
-import { makeCylinderBetween } from '../utils/geometry';
+import { disposeObject3D, makeCylinderBetween } from '../utils/geometry';
 
 export type BikeSide = 'left' | 'right';
 
@@ -736,6 +736,10 @@ export class Bicycle {
 
   getCrankAngle(): number {
     return this.crankAngle;
+  }
+
+  dispose(): void {
+    disposeObject3D(this.root);
   }
 }
 

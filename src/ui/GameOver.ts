@@ -38,15 +38,38 @@ export class GameOverPanels {
   private resultCallbacks: ResultCallbacks | null = null;
   private pauseCallbacks: PauseCallbacks | null = null;
   private lastResult: RunResult | null = null;
+  private readonly listenerController = new AbortController();
+  private unsubscribeLocale: (() => void) | null = null;
 
   constructor() {
-    this.resumeButton.addEventListener('click', () => this.pauseCallbacks?.onResume());
-    this.pauseRestart.addEventListener('click', () => this.pauseCallbacks?.onRestart());
-    this.pauseMenu.addEventListener('click', () => this.pauseCallbacks?.onMenu());
-    this.againButton.addEventListener('click', () => this.resultCallbacks?.onAgain());
-    this.resultMenu.addEventListener('click', () => this.resultCallbacks?.onMenu());
+    const signal = this.listenerController.signal;
+    this.resumeButton.addEventListener(
+      'click',
+      () => this.pauseCallbacks?.onResume(),
+      { signal },
+    );
+    this.pauseRestart.addEventListener(
+      'click',
+      () => this.pauseCallbacks?.onRestart(),
+      { signal },
+    );
+    this.pauseMenu.addEventListener(
+      'click',
+      () => this.pauseCallbacks?.onMenu(),
+      { signal },
+    );
+    this.againButton.addEventListener(
+      'click',
+      () => this.resultCallbacks?.onAgain(),
+      { signal },
+    );
+    this.resultMenu.addEventListener(
+      'click',
+      () => this.resultCallbacks?.onMenu(),
+      { signal },
+    );
     this.resultBest.classList.add('is-hidden');
-    onLocaleChange(() => {
+    this.unsubscribeLocale = onLocaleChange(() => {
       if (this.lastResult) this.renderResult();
     });
   }
@@ -117,6 +140,12 @@ export class GameOverPanels {
     this.resultScreen.classList.remove('is-visible');
     this.resumeButton.blur();
     this.againButton.blur();
+  }
+
+  dispose(): void {
+    this.listenerController.abort();
+    this.unsubscribeLocale?.();
+    this.unsubscribeLocale = null;
   }
 }
 

@@ -9,6 +9,9 @@ dist/
 npm-debug.log*
 .dsh-tmp/
 chrome-profile*
+test-results/
+playwright-report/
+blob-report/
 *.local
 *.png
 *.svg
