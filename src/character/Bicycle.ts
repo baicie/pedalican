@@ -17,7 +17,8 @@ interface ChainPoint {
 
 /**
  * Procedurally modelled bicycle. All parts share a single local coordinate
- * system with +Z as forward, +Y up, and +X to the rider's right.
+ * system with +Z as forward and +Y up. This is a right-handed frame, so +X is
+ * the rider's left; in the default chase view world +X projects to screen-left.
  */
 export class Bicycle {
   readonly root = new THREE.Group();
@@ -707,6 +708,8 @@ export class Bicycle {
     this.rightPedalPivot.rotation.x = -this.crankAngle;
     this.leftPedalPivot.rotation.x = -this.crankAngle;
     this.cogGroup.rotation.x = wheelAngle;
+    // steeringAngle is the physics/Three.js +Y angle: positive points the
+    // front wheel toward +X (screen-left), negative toward -X (screen-right).
     this.steerPivot.rotation.y = clamp(steeringAngle, -0.52, 0.52);
     this.updateChainLinks(distance);
   }

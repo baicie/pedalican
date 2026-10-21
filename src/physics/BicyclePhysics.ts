@@ -96,6 +96,9 @@ export class BicyclePhysics {
     this.offRoad = false;
     this.airTime = 0;
     this.justLanded = false;
+    this.steerInput = 0;
+    this.steerAngle = 0;
+    this.lean = 0;
   }
 
   placeAt(x: number, z: number, yaw: number): void {
@@ -131,14 +134,21 @@ export class BicyclePhysics {
     const speedFactor = clamp(this.speed / this.maxSpeed, 0, 1);
     const steeringAuthority =
       1.08 * clamp(this.speed / 2.4, 0, 1) * lerp(1, 0.62, speedFactor);
-    const yawRate = this.steerInput * steeringAuthority;
+    // In the +Z-forward, +Y-up right-handed frame, a positive Y yaw rotates
+    // forward toward +X. The chase camera looks along +Z, so screen-right is
+    // -X: steer=+1 (right) must therefore produce a negative yaw.
+    const yawRate = -this.steerInput * steeringAuthority;
 
+    // steerAngle is the actual Three.js rotation around +Y. It is positive
+    // toward +X (vehicle-left) and negative toward -X (vehicle-right).
     const targetSteerAngle =
-      this.steerInput * lerp(0.43, 0.28, speedFactor);
+      -this.steerInput * lerp(0.43, 0.28, speedFactor);
     this.steerAngle = damp(this.steerAngle, targetSteerAngle, 13, safeDt);
 
+    // A positive Z roll leans the top of the vehicle toward local -X (right),
+    // so steer=+1 needs a positive lean to lean into a right turn.
     const targetLean =
-      -this.steerInput * 0.31 * clamp(this.speed / 5.6, 0, 1) * lerp(1, 0.76, speedFactor);
+      this.steerInput * 0.31 * clamp(this.speed / 5.6, 0, 1) * lerp(1, 0.76, speedFactor);
     this.lean = damp(this.lean, targetLean, 6.5, safeDt);
 
     // Longitudinal dynamics.

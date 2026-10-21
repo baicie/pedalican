@@ -901,7 +901,9 @@ export class Pelican {
       (airborne ? clamp(-vertical * 0.035, -0.085, 0.09) : 0) +
       Math.sin(time * 1.25) * 0.006 -
       crash * 0.18;
-    const bodyRoll = -frame.steering * 0.065 + Math.sin(time * 1.7) * 0.006 - crash * 0.12;
+    // frame.steering is right-positive. Positive Z roll leans the body toward
+    // local -X, which is screen-right, so the sign leans into the turn.
+    const bodyRoll = frame.steering * 0.065 + Math.sin(time * 1.7) * 0.006 - crash * 0.12;
 
     this.bodyRig.position.set(
       0,
@@ -916,7 +918,7 @@ export class Pelican {
       Math.sin(time * 1.8 + 0.7) * 0.018 +
       (airborne ? clamp(vertical * 0.05, -0.09, 0.08) : 0) +
       crash * 0.2;
-    const neckBaseRoll = -frame.steering * 0.115 + Math.sin(time * 1.45) * 0.012;
+    const neckBaseRoll = frame.steering * 0.115 + Math.sin(time * 1.45) * 0.012;
     this.neckPivot.rotation.x = damp(this.neckPivot.rotation.x, neckBasePitch, 6, dt);
     this.neckPivot.rotation.z = damp(this.neckPivot.rotation.z, neckBaseRoll, 6, dt);
 
@@ -934,7 +936,7 @@ export class Pelican {
     );
     this.headGroup.rotation.z = damp(
       this.headGroup.rotation.z,
-      -frame.steering * 0.06 + Math.sin(time * 1.6 + 0.4) * 0.01,
+      frame.steering * 0.06 + Math.sin(time * 1.6 + 0.4) * 0.01,
       6,
       dt,
     );

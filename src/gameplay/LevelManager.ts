@@ -120,7 +120,11 @@ export class LevelManager {
     return Math.atan2(dx, 1);
   }
 
-  /** A point on the path. Lateral + values are to the rider's right. */
+  /**
+   * A point on the path. Positive lateral follows the path's local +X, which
+   * is the rider's left in the +Z-forward, +Y-up right-handed frame (and
+   * consequently projects to the left side of the default chase camera).
+   */
   pointAt(z: number, lateral: number, out = new THREE.Vector3()): THREE.Vector3 {
     const yaw = this.yawAt(z);
     return out.set(
@@ -130,7 +134,7 @@ export class LevelManager {
     );
   }
 
-  /** Signed lateral offset from the path centre, approximated at the rider's Z. */
+  /** Signed left-positive lateral offset from the path centre at the rider's Z. */
   lateralAt(x: number, z: number): number {
     return x - this.centerX(z);
   }

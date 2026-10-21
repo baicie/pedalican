@@ -106,8 +106,10 @@ export class CameraController {
     const speedT = clamp(view.speed / 16.2, 0, 1);
     const forwardX = Math.sin(yaw);
     const forwardZ = Math.cos(yaw);
-    const rightX = Math.cos(yaw);
-    const rightZ = -Math.sin(yaw);
+    // forward × up for a +Y-up, +Z-forward camera. This is the actual
+    // screen-right vector; the older (cos, -sin) pair was screen-left.
+    const rightX = -Math.cos(yaw);
+    const rightZ = Math.sin(yaw);
 
     if (this.mode === 'chase') {
       const distance = 3.95 + speedT * 0.95;

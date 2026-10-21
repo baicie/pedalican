@@ -29,13 +29,15 @@ npm run typecheck   # strict TypeScript check
 npm test            # committed Vitest regression suite
 npm run build       # type check + production bundle in dist/
 npm run preview     # serve the production build (http://127.0.0.1:4173/)
-npm run test:e2e    # Playwright smoke test against the production preview
+npm run test:e2e    # Playwright gameplay + production smoke tests
 ```
 
 `npm run test:e2e` expects a current `dist/` build and a Playwright Chromium
-browser (`npx playwright install chromium`). The workflow in
-`.github/workflows/ci.yml` runs typecheck, Vitest, build, and the browser smoke
-test on every push and pull request against `main`.
+browser (`npx playwright install chromium`). It starts a Vite development
+server for the gameplay assertions and a production preview server for the
+production smoke test. The workflow in `.github/workflows/ci.yml` runs
+typecheck, Vitest, build, and both browser suites on every push and pull
+request against `main`.
 
 The game is a single static page. The production build is entirely contained
 in `dist/` and needs no backend, API routes, or environment variables.
@@ -61,7 +63,7 @@ and pass both checkpoints before the five hearts run out.
 | --- | --- |
 | `W` / `↑` | Pedal / accelerate |
 | `S` / `↓` | Brake |
-| `A` / `←`, `D` / `→` | Steer and lean |
+| `A` / `←`, `D` / `→` | Steer and lean (A/← screen-left, D/→ screen-right) |
 | `Space` | Jump |
 | `C` | Cycle camera (chase → close → coast) |
 | `P` / `Esc` | Pause / resume |
@@ -71,6 +73,12 @@ and pass both checkpoints before the five hearts run out.
 The menu and pause panels include visible **中文 / EN** language and sound
 controls. Chinese is the default on first visit; switch to English from either
 panel at any time. An explicit language choice is saved in `localStorage`.
+
+Steering is device-independent: `steer = -1` is left and `steer = +1` is right.
+The bicycle uses +Z forward and +Y up, so vehicle-right is -X; the default
+chase camera looks along +Z, which projects world -X to screen-right.
+`BicyclePhysics` converts right-positive input into negative Three.js yaw and
+front-wheel angle, with positive inward lean.
 
 - **Fish** are worth 100 points and chain into a combo (up to ×2.5).
 - Fish hovering above the road need a small jump.
@@ -374,12 +382,14 @@ The following was actually run on the development machine:
   reinstall; all lockfile entries resolve to registry.npmjs.org with no empty
   versions.
 - `npm run typecheck` — passed with strict TypeScript.
-- `npm test` — passed: 20 Vitest tests across game state, scoring, level
-  generation, bicycle physics, collision checks, keyboard input, and the fixed
-  simulation loop.
-- `npm run test:e2e` — passed: Playwright smoke test against the production
-  preview covering Chinese default, debug API absence, start, five-heart HUD,
-  acceleration, countdown, pause, and resume.
+- `npm test` — passed: 29 Vitest tests across game state, scoring, level
+  generation, bicycle physics, collision checks, keyboard input, steering
+  sign conventions, camera projection, and the fixed simulation loop.
+- `npm run test:e2e` — passed: two gameplay tests covering A/left, D/right,
+  world/screen projection, front wheel/lean/body signs, Chase/Close/Coast
+  semantics, pause and restart, plus the production smoke test covering Chinese
+  default, debug API absence, start, five-heart HUD, acceleration, countdown,
+  pause, and resume.
 - `npm run build` — passed; production bundle written to `dist/`.
 - `GameLoop` now advances simulation in fixed 1/60 s steps with a five-step
   catch-up cap and renders once per browser frame, so ordinary frame-rate
