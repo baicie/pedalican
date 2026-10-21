@@ -386,10 +386,10 @@ The following was actually run on the development machine:
   generation, bicycle physics, collision checks, keyboard input, steering
   sign conventions, camera projection, and the fixed simulation loop.
 - `npm run test:e2e` — passed: two gameplay tests covering A/left, D/right,
-  world/screen projection, front wheel/lean/body signs, Chase/Close/Coast
-  semantics, pause and restart, plus the production smoke test covering Chinese
-  default, debug API absence, start, five-heart HUD, acceleration, countdown,
-  pause, and resume.
+  world/screen projection, front wheel/lean/body signs, wing-IK hand-to-grip
+  accuracy, Chase/Close/Coast semantics, pause and restart, plus the production
+  smoke test covering Chinese default, debug API absence, start, five-heart HUD,
+  acceleration, countdown, pause, and resume.
 - `npm run build` — passed; production bundle written to `dist/`.
 - `GameLoop` now advances simulation in fixed 1/60 s steps with a five-step
   catch-up cap and renders once per browser frame, so ordinary frame-rate

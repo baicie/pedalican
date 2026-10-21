@@ -14,6 +14,8 @@ interface SteeringState {
   cameraMode: string;
   cameraRightX: number;
   cameraRightZ: number;
+  wingLeftError: number;
+  wingRightError: number;
 }
 
 async function steeringState(page: Page): Promise<SteeringState> {
@@ -30,7 +32,19 @@ async function steeringState(page: Page): Promise<SteeringState> {
         };
         playerRoot: { position: { clone: () => import('three').Vector3 } };
         bicycle: { getSteeringPivot: () => { rotation: { y: number } } };
-        pelican: { bodyRig: { rotation: { z: number } } };
+        pelican: {
+          bodyRig: { rotation: { z: number } };
+          wingRigs: {
+            left: { hand: { getWorldPosition: (out: import('three').Vector3) => void } };
+            right: { hand: { getWorldPosition: (out: import('three').Vector3) => void } };
+          };
+        };
+        riding: {
+          getGripWorldPositions: () => {
+            left: import('three').Vector3;
+            right: import('three').Vector3;
+          };
+        };
         leanGroup: { rotation: { z: number } };
         cameraController: { mode: string };
         camera: import('three').Camera;
@@ -41,6 +55,11 @@ async function steeringState(page: Page): Promise<SteeringState> {
     const yaw = game.physics.yaw;
     game.camera.updateMatrixWorld(true);
     cameraRight.setFromMatrixColumn(game.camera.matrixWorld, 0);
+    const grips = game.riding.getGripWorldPositions();
+    const leftHand = grips.left.clone();
+    const rightHand = grips.right.clone();
+    game.pelican.wingRigs.left.hand.getWorldPosition(leftHand);
+    game.pelican.wingRigs.right.hand.getWorldPosition(rightHand);
     return {
       phase: game.state.phase,
       yaw,
@@ -55,6 +74,8 @@ async function steeringState(page: Page): Promise<SteeringState> {
       cameraMode: game.cameraController.mode,
       cameraRightX: cameraRight.x,
       cameraRightZ: cameraRight.z,
+      wingLeftError: leftHand.distanceTo(grips.left),
+      wingRightError: rightHand.distanceTo(grips.right),
     };
   });
 }
@@ -112,6 +133,8 @@ test('A and D steer left/right consistently in world and screen space', async ({
     (left.after.x - left.before.x) * left.before.cameraRightX +
     (left.after.z - left.before.z) * left.before.cameraRightZ;
   expect(leftScreenDelta).toBeLessThan(0);
+  expect(left.after.wingLeftError).toBeLessThan(0.03);
+  expect(left.after.wingRightError).toBeLessThan(0.03);
 
   const right = await steer(page, 'd');
   expect(right.after.yaw).toBeLessThan(right.before.yaw);
@@ -124,6 +147,8 @@ test('A and D steer left/right consistently in world and screen space', async ({
     (right.after.x - right.before.x) * right.before.cameraRightX +
     (right.after.z - right.before.z) * right.before.cameraRightZ;
   expect(rightScreenDelta).toBeGreaterThan(0);
+  expect(right.after.wingLeftError).toBeLessThan(0.03);
+  expect(right.after.wingRightError).toBeLessThan(0.03);
 
   expect(errors).toEqual([]);
 });
